@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parking Lot System</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: #fff;
+      width: 400px;
+      padding: 30px 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .option {
+      background: #f1f4f9;
+      color: #333;
+      padding: 15px;
+      margin: 12px 0;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .option:hover {
+      background: #0077ff;
+      color: #fff;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 119, 255, 0.2);
+    }
+
+    footer {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 15px;
+    }
+
+    /* MODAL POPUP STYLING */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #fff;
+      width: 350px;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    .modal-content h2 {
+      margin-bottom: 15px;
+      font-size: 20px;
+      color: #0077ff;
+    }
+
+    .modal-content input, select {
+      width: 90%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .modal-content button {
+      background: #0077ff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .modal-content button:hover {
+      background: #005fd4;
+    }
+
+    .close {
+      float: right;
+      cursor: pointer;
+      font-size: 20px;
+      color: #aaa;
+    }
+
+    .close:hover {
+      color: #000;
+    }
+
+    .table {
+      text-align: left;
+      margin-top: 10px;
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th, .table td {
+      padding: 6px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    .status-available {
+      color: green;
+      font-weight: 600;
+    }
+
+    .status-occupied {
+      color: red;
+      font-weight: 600;
+    }
+
+    .status-booked {
+      color: orange;
+      font-weight: 600;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Parking Lot System</h1>
+    <div class="option" onclick="openModal('park')">🚗 Park Vehicle</div>
+    <div class="option" onclick="openModal('book')">📅 Pre-Book Slot</div>
+    <div class="option" onclick="openModal('status')">📋 Display Parking Status</div>
+    <div class="option" onclick="openModal('exit')">🚙 Exit Vehicle</div>
+    <div class="option" onclick="openModal('search')">🔍 Search Vehicle</div>
+    <div class="option" onclick="openModal('admin')">📊 Admin Summary</div>
+    <footer>© 2025 SmartPark | Minimal UI</footer>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal" class="modal">
+    <div class="modal-content" id="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modal-title"></h2>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+
+    let vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
+    let bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+    const totalSlots = 10; // fixed total slots
+
+    function saveData() {
+      localStorage.setItem('vehicles', JSON.stringify(vehicles));
+      localStorage.setItem('bookings', JSON.stringify(bookings));
+    }
+
+    function openModal(type) {
+      modal.style.display = 'flex';
+      if (type === 'park') {
+        modalTitle.innerText = "🚗 Park Vehicle";
+        modalBody.innerHTML = `
+          <input id="owner" type="text" placeholder="Owner Name">
+          <input id="number" type="text" placeholder="Vehicle Number">
+          <select id="type">
+            <option>Car</option>
+            <option>Bike</option>
+            <option>Scotty</option>
+          </select>
+          <input id="slot" type="number" placeholder="Slot Number (1-${totalSlots})">
+          <button onclick="parkVehicle()">Submit</button>
+        `;
+      } else if (type === 'book') {
+        modalTitle.innerText = "📅 Pre-Book Slot";
+        modalBody.innerHTML = `
+          <input id="bowner" type="text" placeholder="Owner Name">
+          <input id="bnumber" type="text" placeholder="Vehicle Number">
+          <input id="bdate" type="date">
+          <input id="bslot" type="number" placeholder="Slot Number (1-${totalSlots})">
+          <button onclick="bookSlot()">Book Slot</button>
+        `;
+      } else if (type === 'status') {
+        displayStatus();
+      } else if (type === 'exit') {
+        modalTitle.innerText = "🚙 Exit Vehicle";
+        modalBody.innerHTML = `
+          <input id="exitNum" type="text" placeholder="Enter Vehicle Number">
+          <button onclick="exitVehicle()">Exit & Generate Receipt</button>
+        `;
+      } else if (type === 'search') {
+        modalTitle.innerText = "🔍 Search Vehicle";
+        modalBody.innerHTML = `
+          <input id="searchNum" type="text" placeholder="Enter Vehicle Number">
+          <button onclick="searchVehicle()">Search</button>
+          <div id="searchResult"></div>
+        `;
+      } else if (type === 'admin') {
+        modalTitle.innerText = "📊 Admin Summary";
+        modalBody.innerHTML = `
+          <p>Total Slots: ${totalSlots}</p>
+          <p>Occupied: ${vehicles.length}</p>
+          <p>Pre-Booked: ${bookings.length}</p>
+          <p>Available: ${totalSlots - vehicles.length - bookings.length}</p>
+          <p>Total Revenue (Simulated): ₹${vehicles.length * 50}</p>
+        `;
+      }
+    }
+
+    function closeModal() {
+      modal.style.display = 'none';
+      saveData();
+    }
+
+    function parkVehicle() {
+      const owner = document.getElementById('owner').value;
+      const number = document.getElementById('number').value;
+      const type = document.getElementById('type').value;
+      const slot = parseInt(document.getElementById('slot').value);
+
+      if (!owner || !number || !slot) return alert("Please fill all details!");
+      if (slot < 1 || slot > totalSlots) return alert("Invalid slot number!");
+
+      // check if slot already taken or booked
+      const taken = vehicles.find(v => v.slot === slot) || bookings.find(b => b.slot === slot);
+      if (taken) return alert("This slot is already occupied or booked!");
+
+      vehicles.push({ owner, number, type, slot, time: new Date().toLocaleTimeString() });
+      saveData();
+      alert("Vehicle Parked Successfully!");
+      closeModal();
+    }
+
+    function bookSlot() {
+      const owner = document.getElementById('bowner').value;
+      const number = document.getElementById('bnumber').value;
+      const date = document.getElementById('bdate').value;
+      const slot = parseInt(document.getElementById('bslot').value);
+
+      if (!owner || !number || !date || !slot) return alert("Please fill all details!");
+      if (slot < 1 || slot > totalSlots) return alert("Invalid slot number!");
+
+      // check if slot already occupied or booked
+      const taken = vehicles.find(v => v.slot === slot) || bookings.find(b => b.slot === slot);
+      if (taken) return alert("This slot is already occupied or pre-booked!");
+
+      bookings.push({ owner, number, date, slot });
+      saveData();
+      alert("Slot Pre-Booked Successfully!");
+      closeModal();
+    }
+
+    function displayStatus() {
+      modalTitle.innerText = "📋 Parking Slot Status";
+
+      let table = `
+        <table class='table'>
+          <tr>
+            <th>Slot</th>
+            <th>Status</th>
+            <th>Details</th>
+          </tr>
+      `;
+
+      for (let i = 1; i <= totalSlots; i++) {
+        const vehicle = vehicles.find(v => v.slot === i);
+        const booking = bookings.find(b => b.slot === i);
+
+        if (vehicle) {
+          table += `
+            <tr>
+              <td>${i}</td>
+              <td class="status-occupied">Occupied</td>
+              <td>${vehicle.owner} (${vehicle.number})</td>
+            </tr>`;
+        } else if (booking) {
+          table += `
+            <tr>
+              <td>${i}</td>
+              <td class="status-booked">Pre-Booked</td>
+              <td>${booking.owner} (${booking.number}) on ${booking.date}</td>
+            </tr>`;
+        } else {
+          table += `
+            <tr>
+              <td>${i}</td>
+              <td class="status-available">Available</td>
+              <td>-</td>
+            </tr>`;
+        }
+      }
+
+      table += "</table>";
+      modalBody.innerHTML = table;
+    }
+
+    function exitVehicle() {
+      const number = document.getElementById('exitNum').value;
+      const index = vehicles.findIndex(v => v.number === number);
+      if (index === -1) return alert("Vehicle not found!");
+      vehicles.splice(index, 1);
+      saveData();
+      alert("Vehicle Exited! ₹50 Charged.");
+      closeModal();
+    }
+
+    function searchVehicle() {
+      const number = document.getElementById('searchNum').value;
+      const resultDiv = document.getElementById('searchResult');
+      const vehicle = vehicles.find(v => v.number === number);
+      const booking = bookings.find(b => b.number === number);
+
+      if (vehicle) {
+        resultDiv.innerHTML = `
+          <p><b>Owner:</b> ${vehicle.owner}</p>
+          <p><b>Type:</b> ${vehicle.type}</p>
+          <p><b>Slot:</b> ${vehicle.slot}</p>
+          <p><b>Status:</b> Occupied</p>
+        `;
+      } else if (booking) {
+        resultDiv.innerHTML = `
+          <p><b>Owner:</b> ${booking.owner}</p>
+          <p><b>Slot:</b> ${booking.slot}</p>
+          <p><b>Date:</b> ${booking.date}</p>
+          <p><b>Status:</b> Pre-Booked</p>
+        `;
+      } else {
+        resultDiv.innerHTML = "<p>No vehicle found!</p>";
+      }
+    }
+
+    window.onclick = function(event) {
+      if (event.target === modal) closeModal();
+    }
+  </script>
+</body>
+</html>
