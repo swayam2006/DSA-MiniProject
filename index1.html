@@ -180,7 +180,7 @@
 
     let vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
     let bookings = JSON.parse(localStorage.getItem('bookings')) || [];
-    const totalSlots = 10; // fixed total slots
+    const totalSlots = 5; // ✅ Slot limit set to 5
 
     function saveData() {
       localStorage.setItem('vehicles', JSON.stringify(vehicles));
@@ -252,7 +252,6 @@
       if (!owner || !number || !slot) return alert("Please fill all details!");
       if (slot < 1 || slot > totalSlots) return alert("Invalid slot number!");
 
-      // check if slot already taken or booked
       const taken = vehicles.find(v => v.slot === slot) || bookings.find(b => b.slot === slot);
       if (taken) return alert("This slot is already occupied or booked!");
 
@@ -271,7 +270,6 @@
       if (!owner || !number || !date || !slot) return alert("Please fill all details!");
       if (slot < 1 || slot > totalSlots) return alert("Invalid slot number!");
 
-      // check if slot already occupied or booked
       const taken = vehicles.find(v => v.slot === slot) || bookings.find(b => b.slot === slot);
       if (taken) return alert("This slot is already occupied or pre-booked!");
 
